@@ -22,10 +22,10 @@ export const handler = async (event) => {
         const { prompt } = JSON.parse(event.body);
         const apiKey = process.env.GEMINI_API_KEY;
 
-        // CEK 1: Apakah API Key ada di Netlify?
+        // CEK 1: Validasi API Key
         if (!apiKey) {
-            console.error("FATAL: GEMINI_API_KEY is missing in environment variables.");
-            throw new Error("API Key belum disetting di Environment Variables Netlify.");
+            console.error("FATAL: GEMINI_API_KEY is missing.");
+            throw new Error("API Key belum disetting di Netlify Environment Variables.");
         }
 
         const systemPrompt = `
@@ -81,7 +81,8 @@ You must output ONLY valid JSON based on this exact structure:
 4. Output RAW JSON only. Do not use Markdown backticks.
 `;
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // PERBAIKAN DISINI: Menggunakan 'gemini-1.5-flash-latest' yang lebih stabil
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
         
         const payload = {
             contents: [{
@@ -103,10 +104,10 @@ You must output ONLY valid JSON based on this exact structure:
 
         const data = await apiResponse.json();
 
-        // CEK 2: Apakah Google Mengirim Error? (Ini yang sebelumnya tersembunyi)
+        // CEK 2: Error Handling dari Google
         if (data.error) {
             console.error("Google API Error:", JSON.stringify(data.error));
-            throw new Error(`Google menolak request: ${data.error.message} (Code: ${data.error.code})`);
+            throw new Error(`Google menolak request: ${data.error.message} (Code: ${data.error.code || 'Unknown'})`);
         }
 
         // CEK 3: Validasi Candidates
@@ -128,8 +129,8 @@ You must output ONLY valid JSON based on this exact structure:
     } catch (error) {
         console.error("Function execution failed:", error);
         return {
-            statusCode: 500, // Tetap return 500 agar UI tahu ini error
-            body: JSON.stringify({ error: error.message }) // Kirim pesan error asli ke Frontend
+            statusCode: 500,
+            body: JSON.stringify({ error: error.message })
         };
     }
 };

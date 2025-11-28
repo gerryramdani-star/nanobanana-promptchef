@@ -81,8 +81,8 @@ You must output ONLY valid JSON based on this exact structure:
 4. Output RAW JSON only. Do not use Markdown backticks.
 `;
 
-        // PERBAIKAN DISINI: Menggunakan 'gemini-1.5-flash-latest' yang lebih stabil
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        // PERBAIKAN: Kembali ke nama model standar 'gemini-1.5-flash'
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
         
         const payload = {
             contents: [{

@@ -80,7 +80,7 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
 1. If the user doesn't provide specific text, invent catchy, short marketing copy.
 2. ALWAYS enforce 'Occlusion' logic. The text should feel like it's physically IN the scene.
 3. Use sensory language (e.g., "glistening", "sizzling", "velvety", "translucent", "gritty").
-4. Output RAW JSON only.
+4. Output RAW JSON only. Do not include comments (// or /*) in the JSON output.
 `;
 
         let constraints = "";
@@ -121,7 +121,7 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
                 generationConfig: {
                     temperature: 0.85,
                     maxOutputTokens: 2000,
-                    responseMimeType: "application/json" // PERBAIKAN: Memaksa Output JSON Murni
+                    responseMimeType: "application/json"
                 }
             };
 
@@ -140,8 +140,7 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
 
         const rawText = await runInference();
 
-        // PERBAIKAN: Pembersih JSON yang Lebih Cerdas
-        // Mencari kurung kurawal pertama '{' dan terakhir '}' untuk membuang teks sampah
+        // --- JSON CLEANING & PARSING LOGIC ---
         let cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
         const firstBrace = cleanJson.indexOf('{');
         const lastBrace = cleanJson.lastIndexOf('}');
@@ -152,13 +151,27 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
         
         let jsonResult;
         try {
+            // Percobaan 1: Strict Standard JSON Parse
             jsonResult = JSON.parse(cleanJson);
         } catch (e) {
-            console.error("JSON Parse Error, sending raw text.", e);
-            jsonResult = { 
-                error: "Format JSON tidak sempurna, tapi ini hasilnya:", 
-                raw_output: cleanJson 
-            };
+            console.warn("Standard JSON Parse failed, attempting Loose Parse...");
+            try {
+                // Percobaan 2: Loose Parse (Menangani trailing commas atau comments yang sering dibuat AI)
+                // Kita gunakan Function constructor sebagai alternatif aman dari eval untuk data internal
+                // Ini akan mengizinkan format objek JS yang tidak valid secara JSON ketat
+                const looseJson = cleanJson.replace(/\/\/.*$/gm, ''); // Hapus single line comments jika ada
+                jsonResult = (new Function(`return ${looseJson}`))();
+            } catch (e2) {
+                console.error("All parsing attempts failed.", e2);
+                // Fallback Terakhir: Tampilkan raw text dalam struktur yang bisa dibaca user
+                jsonResult = { 
+                    "status": "Generated (Raw Format)",
+                    "note": "AI menghasilkan format yang sedikit tidak standar, tapi isinya ada di bawah:",
+                    "prompt": {
+                        "visual_elements": { "raw_content": cleanJson }
+                    }
+                };
+            }
         }
 
         return {

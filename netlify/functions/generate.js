@@ -27,8 +27,6 @@ export const handler = async (event) => {
             throw new Error("API Key belum disetting di Netlify Environment Variables.");
         }
 
-        // UPGRADE: System Prompt "Extreme Director Mode"
-        // Kita ubah instruksinya agar AI benci hal yang membosankan (Boring).
         const systemPrompt = `
 **ROLE:**
 You are a World-Class Commercial Creative Director specializing in High-Impact Advertising & Nano Banana Pro (Gemini Image 3).
@@ -85,7 +83,6 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
 4. Output RAW JSON only.
 `;
 
-        // Constraint Block (Pilihan User dari Dropdown)
         let constraints = "";
         if (style || font || lighting || ratio || language) {
             constraints += "\n**CRITICAL USER OVERRIDES (YOU MUST FOLLOW THESE):**\n";
@@ -96,45 +93,35 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
             if (language) constraints += `- Text Language: Ensure spelling of text content is strictly in "${language}".\n`;
         }
 
-        // --- FUNGSI 1: CARI MODEL YANG TERSEDIA (AUTO-DISCOVERY) ---
         async function getAvailableModel() {
-            // console.log("Auto-discovering available models...");
             const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-            
             const response = await fetch(listUrl);
             const data = await response.json();
 
             if (data.error) throw new Error(`Gagal cek model: ${data.error.message}`);
             if (!data.models) throw new Error("API Key valid tapi tidak ada model yang tersedia.");
 
-            // Prioritas: Flash -> Pro -> Apa saja
             const flashModel = data.models.find(m => m.name.includes('flash') && m.supportedGenerationMethods.includes('generateContent'));
             const proModel = data.models.find(m => m.name.includes('pro') && m.supportedGenerationMethods.includes('generateContent'));
             const anyModel = data.models.find(m => m.supportedGenerationMethods.includes('generateContent'));
 
             const selected = flashModel || proModel || anyModel;
-
             if (!selected) throw new Error("Tidak ditemukan model yang mendukung 'generateContent' di akun ini.");
 
             return selected.name.replace('models/', '');
         }
 
-        // --- FUNGSI 2: EKSEKUSI PROMPT ---
         async function runInference() {
             const modelName = await getAvailableModel();
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-            
-            // Gabungkan semua instruksi
             const finalPrompt = `SYSTEM INSTRUCTION:\n${systemPrompt}\n${constraints}\nUSER INPUT:\n${prompt}`;
 
             const payload = {
-                contents: [{
-                    role: "user",
-                    parts: [{ text: finalPrompt }]
-                }],
+                contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
                 generationConfig: {
-                    temperature: 0.85, // KITA NAIKKAN BIAR LEBIH LIAR/KREATIF
-                    maxOutputTokens: 2000
+                    temperature: 0.85,
+                    maxOutputTokens: 2000,
+                    responseMimeType: "application/json" // PERBAIKAN: Memaksa Output JSON Murni
                 }
             };
 
@@ -145,7 +132,6 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
             });
 
             const data = await response.json();
-
             if (data.error) throw new Error(data.error.message);
             if (!data.candidates || data.candidates.length === 0) throw new Error("Empty candidates");
 
@@ -153,13 +139,22 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
         }
 
         const rawText = await runInference();
-        const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        // PERBAIKAN: Pembersih JSON yang Lebih Cerdas
+        // Mencari kurung kurawal pertama '{' dan terakhir '}' untuk membuang teks sampah
+        let cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const firstBrace = cleanJson.indexOf('{');
+        const lastBrace = cleanJson.lastIndexOf('}');
+        
+        if (firstBrace !== -1 && lastBrace !== -1) {
+            cleanJson = cleanJson.substring(firstBrace, lastBrace + 1);
+        }
         
         let jsonResult;
         try {
             jsonResult = JSON.parse(cleanJson);
         } catch (e) {
-            console.error("JSON Parse Error, sending raw text.");
+            console.error("JSON Parse Error, sending raw text.", e);
             jsonResult = { 
                 error: "Format JSON tidak sempurna, tapi ini hasilnya:", 
                 raw_output: cleanJson 

@@ -19,7 +19,8 @@ export const handler = async (event) => {
     }
 
     try {
-        const { prompt } = JSON.parse(event.body);
+        // PERBAIKAN: Menerima parameter tambahan dari Frontend
+        const { prompt, style, font, lighting, ratio, language } = JSON.parse(event.body);
         const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
@@ -80,6 +81,17 @@ You must output ONLY valid JSON based on this exact structure:
 4. Output RAW JSON only. Do not use Markdown backticks.
 `;
 
+        // PERBAIKAN: Membangun Blok Constraint (Aturan Paksa)
+        let constraints = "";
+        if (style || font || lighting || ratio || language) {
+            constraints += "\n**CRITICAL USER OVERRIDES (YOU MUST FOLLOW THESE):**\n";
+            if (style) constraints += `- Visual Style: Force the image style to be "${style}".\n`;
+            if (font) constraints += `- Typography Style: Use "${font}" font style for the text.\n`;
+            if (lighting) constraints += `- Lighting & Atmosphere: Enforce "${lighting}" mood.\n`;
+            if (ratio) constraints += `- Aspect Ratio Target: ${ratio} (Adjust composition logic to fit this frame).\n`;
+            if (language) constraints += `- Text Language: Ensure spelling of text content is strictly in "${language}".\n`;
+        }
+
         // --- FUNGSI 1: CARI MODEL YANG TERSEDIA (AUTO-DISCOVERY) ---
         async function getAvailableModel() {
             console.log("Auto-discovering available models...");
@@ -127,7 +139,8 @@ You must output ONLY valid JSON based on this exact structure:
             // Langkah 2: Panggil model tersebut
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             
-            const finalPrompt = `SYSTEM INSTRUCTION:\n${systemPrompt}\n\nUSER INPUT:\n${prompt}`;
+            // PERBAIKAN: Menyisipkan constraints ke dalam prompt
+            const finalPrompt = `SYSTEM INSTRUCTION:\n${systemPrompt}\n${constraints}\nUSER INPUT:\n${prompt}`;
 
             const payload = {
                 contents: [{

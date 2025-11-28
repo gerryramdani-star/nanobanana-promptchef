@@ -28,6 +28,17 @@
                 0 4px 30px rgba(0, 0, 0, 0.3),
                 inset 0 0 20px rgba(255, 255, 255, 0.02);
         }
+        
+        /* Custom Select Style for Glassmorphism */
+        select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23fbbf24' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
 
         .gradient-text {
             background: linear-gradient(to right, #fbbf24, #f59e0b);
@@ -75,17 +86,17 @@
     <!-- Header -->
     <header class="w-full max-w-5xl mb-12 text-center relative z-10">
         <div class="inline-block glass-panel rounded-full px-5 py-1.5 mb-6">
-            <span class="text-yellow-400 text-xs sm:text-sm font-bold tracking-[0.2em]">GEN 1.0 // GEMINI FLASH ✨</span>
+            <span class="text-yellow-400 text-xs sm:text-sm font-bold tracking-[0.2em]">GEN 2.0 // AUTO DISCOVERY ✨</span>
         </div>
         <h1 class="text-4xl sm:text-7xl font-extrabold mb-4 tracking-tight">Nano Banana <br class="sm:hidden"><span class="gradient-text">Prompt Chef</span></h1>
-        <p class="text-gray-300 text-base sm:text-xl max-w-xl mx-auto leading-relaxed">Ubah ide mentah menjadi resep JSON Prompt profesional, siap saji dalam hitungan detik.</p>
+        <p class="text-gray-300 text-base sm:text-xl max-w-xl mx-auto leading-relaxed">Ubah ide mentah menjadi resep JSON Prompt profesional, dengan kontrol kreatif penuh.</p>
     </header>
 
     <!-- Main Container -->
-    <main class="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-8 relative z-10">
+    <main class="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-12 gap-8 relative z-10">
         
-        <!-- Input Section -->
-        <section class="glass-panel rounded-3xl p-6 sm:p-8 h-fit transition-all hover:border-yellow-500/30">
+        <!-- Input Section (Left - 7 Columns) -->
+        <section class="lg:col-span-7 glass-panel rounded-3xl p-6 sm:p-8 h-fit transition-all hover:border-yellow-500/30">
             <h2 class="text-xl font-bold mb-6 flex items-center gap-3 text-yellow-500">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
@@ -95,19 +106,19 @@
             
             <form id="promptForm" class="space-y-6">
                 
-                <!-- TEMPLATE CHIPS (FIXED LAYOUT) -->
+                <!-- TEMPLATE CHIPS -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider pl-1">Mulai dengan Template (Klik untuk Pakai)</label>
-                    <!-- UPDATED: Using flex-wrap so items wrap to next line instead of hiding -->
+                    <label class="block text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider pl-1">Mulai dengan Template</label>
                     <div id="templateContainer" class="flex flex-wrap gap-2.5">
                         <!-- Templates injected via JS -->
                     </div>
                 </div>
 
+                <!-- MAIN TEXT AREA -->
                 <div class="relative group">
                     <textarea 
                         id="userInput" 
-                        rows="8" 
+                        rows="6" 
                         class="w-full bg-black/30 backdrop-blur-sm border border-white/10 rounded-2xl p-5 text-white placeholder-gray-500 focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 transition-all resize-none outline-none shadow-inner text-sm sm:text-base leading-relaxed"
                         placeholder="Ketik ide mentahmu di sini, atau pilih template di atas..."
                         required></textarea>
@@ -117,6 +128,104 @@
                             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
                         </svg>
                     </button>
+                </div>
+
+                <!-- NEW: CUSTOM OPTIONS (BUMBU TAMBAHAN) -->
+                <div class="bg-white/5 rounded-2xl p-5 border border-white/5">
+                    <label class="block text-xs font-bold text-yellow-500 mb-4 uppercase tracking-wider flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        </svg>
+                        Bumbu Tambahan (Opsional)
+                    </label>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <!-- 1. Visual Style -->
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-gray-400 font-bold tracking-wide pl-1">Visual Style</label>
+                            <select id="optStyle" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all cursor-pointer hover:bg-black/50">
+                                <option value="" class="bg-gray-900 text-gray-400">Biarkan AI Memilih (Auto)</option>
+                                <option value="Cinematic" class="bg-gray-900">Cinematic</option>
+                                <option value="Photorealistic" class="bg-gray-900">Photorealistic</option>
+                                <option value="3D Render" class="bg-gray-900">3D Render (C4D)</option>
+                                <option value="Anime / Illustration" class="bg-gray-900">Anime / Illustration</option>
+                                <option value="Minimalist" class="bg-gray-900">Minimalist</option>
+                                <option value="Cyberpunk" class="bg-gray-900">Cyberpunk / Futuristic</option>
+                                <option value="Vintage / Retro" class="bg-gray-900">Vintage / Retro</option>
+                                <option value="Surreal" class="bg-gray-900">Surreal / Dreamy</option>
+                                <option value="Oil Painting" class="bg-gray-900">Oil Painting</option>
+                                <option value="Sketch" class="bg-gray-900">Sketch / Blueprint</option>
+                            </select>
+                        </div>
+
+                        <!-- 2. Typography -->
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-gray-400 font-bold tracking-wide pl-1">Font Style</label>
+                            <select id="optFont" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all cursor-pointer hover:bg-black/50">
+                                <option value="" class="bg-gray-900 text-gray-400">Biarkan AI Memilih (Auto)</option>
+                                <option value="Modern Sans-Serif" class="bg-gray-900">Modern Sans-Serif</option>
+                                <option value="Elegant Serif" class="bg-gray-900">Elegant Serif</option>
+                                <option value="Handwritten" class="bg-gray-900">Handwritten / Script</option>
+                                <option value="Neon Glowing" class="bg-gray-900">Neon Glowing</option>
+                                <option value="Metallic 3D" class="bg-gray-900">Metallic 3D</option>
+                                <option value="Grunge" class="bg-gray-900">Distressed / Grunge</option>
+                                <option value="Vintage Label" class="bg-gray-900">Vintage Label</option>
+                                <option value="Bubble" class="bg-gray-900">Bubble / Playful</option>
+                                <option value="Glitch" class="bg-gray-900">Glitch / Digital</option>
+                                <option value="Minimalist Thin" class="bg-gray-900">Minimalist Thin</option>
+                            </select>
+                        </div>
+
+                        <!-- 3. Lighting -->
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-gray-400 font-bold tracking-wide pl-1">Lighting & Mood</label>
+                            <select id="optLighting" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all cursor-pointer hover:bg-black/50">
+                                <option value="" class="bg-gray-900 text-gray-400">Biarkan AI Memilih (Auto)</option>
+                                <option value="Golden Hour" class="bg-gray-900">Golden Hour (Warm)</option>
+                                <option value="Dark & Moody" class="bg-gray-900">Dark & Moody</option>
+                                <option value="Studio Bright" class="bg-gray-900">Studio Bright (Clean)</option>
+                                <option value="Neon Night" class="bg-gray-900">Neon Night</option>
+                                <option value="Natural Window" class="bg-gray-900">Natural Window Light</option>
+                                <option value="Dramatic Rim" class="bg-gray-900">Dramatic Rim Light</option>
+                                <option value="Soft Pastel" class="bg-gray-900">Soft Pastel / Dreamy</option>
+                                <option value="High Contrast" class="bg-gray-900">High Contrast / Noir</option>
+                                <option value="Underwater" class="bg-gray-900">Underwater / Aqua</option>
+                                <option value="Warm Fire" class="bg-gray-900">Warm Fire / Candle</option>
+                            </select>
+                        </div>
+
+                        <!-- 4. Aspect Ratio -->
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase text-gray-400 font-bold tracking-wide pl-1">Aspect Ratio</label>
+                            <select id="optRatio" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all cursor-pointer hover:bg-black/50">
+                                <option value="" class="bg-gray-900 text-gray-400">Bebas (Auto)</option>
+                                <option value="1:1" class="bg-gray-900">1:1 (Square - IG Feed)</option>
+                                <option value="16:9" class="bg-gray-900">16:9 (Landscape - YouTube)</option>
+                                <option value="9:16" class="bg-gray-900">9:16 (Portrait - TikTok/Story)</option>
+                                <option value="4:5" class="bg-gray-900">4:5 (Portrait - IG Feed)</option>
+                                <option value="4:3" class="bg-gray-900">4:3 (Classic TV - Retro)</option>
+                                <option value="3:4" class="bg-gray-900">3:4 (Portrait - Poster)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- 5. Language -->
+                         <div class="space-y-1 sm:col-span-2">
+                            <label class="text-[10px] uppercase text-gray-400 font-bold tracking-wide pl-1">Bahasa Teks (Spelling)</label>
+                            <select id="optLanguage" class="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white focus:ring-1 focus:ring-yellow-500 focus:border-yellow-500 outline-none transition-all cursor-pointer hover:bg-black/50">
+                                <option value="" class="bg-gray-900 text-gray-400">Sesuai Input User (Auto)</option>
+                                <option value="Bahasa Indonesia" class="bg-gray-900">Bahasa Indonesia</option>
+                                <option value="English" class="bg-gray-900">English (Inggris)</option>
+                                <option value="Javanese" class="bg-gray-900">Javanese (Jawa)</option>
+                                <option value="Japanese" class="bg-gray-900">Japanese (Jepang)</option>
+                                <option value="Korean" class="bg-gray-900">Korean (Korea)</option>
+                                <option value="Arabic" class="bg-gray-900">Arabic (Arab)</option>
+                                <option value="Mandarin" class="bg-gray-900">Mandarin (China)</option>
+                                <option value="French" class="bg-gray-900">French (Prancis)</option>
+                                <option value="Spanish" class="bg-gray-900">Spanish (Spanyol)</option>
+                                <option value="German" class="bg-gray-900">German (Jerman)</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
 
                 <button 
@@ -136,8 +245,8 @@
             </div>
         </section>
 
-        <!-- Output Section -->
-        <section class="glass-panel rounded-3xl p-6 sm:p-8 relative min-h-[500px] lg:h-auto flex flex-col transition-all hover:border-green-400/30 group/output">
+        <!-- Output Section (Right - 5 Columns) -->
+        <section class="lg:col-span-5 glass-panel rounded-3xl p-6 sm:p-8 relative min-h-[500px] lg:h-auto flex flex-col transition-all hover:border-green-400/30 group/output">
             <h2 class="text-xl font-bold mb-6 flex items-center gap-3 text-green-400">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
@@ -188,6 +297,7 @@
     </div>
 
     <script>
+        // TEMPLATE DATA
         const templates = [
             { icon: "🍔", label: "Iklan Kuliner", prompt: "Foto komersial close-up burger premium. Roti bun mengkilap, keju meleleh tumpah, daging tebal berair (juicy). Ada uap panas mengepul. Background gelap elegan. Teks 'JUARA RASA' di belakang burger dengan efek neon oranye." },
             { icon: "🎬", label: "Poster Film", prompt: "Poster film aksi judul 'JAKARTA UNDERCOVER'. Suasana hujan malam hari di jalanan kota dengan lampu neon cyber-noir. Karakter utama siluet misterius memakai hoodie. Teks judul besar font metalik kotor (gritty) di bagian atas." },
@@ -207,7 +317,6 @@
         templates.forEach(t => {
             const btn = document.createElement('button');
             btn.type = "button";
-            // Updated class: Changed text size, padding and spacing for better wrapping
             btn.className = "flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full px-3 py-2 text-xs text-gray-300 hover:text-yellow-400 transition-all backdrop-blur-sm group mb-1";
             btn.innerHTML = `<span class="grayscale group-hover:grayscale-0 transition text-base">${t.icon}</span> ${t.label}`;
             
@@ -231,6 +340,14 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const prompt = document.getElementById('userInput').value;
+            
+            // CAPTURE NEW INPUTS
+            const style = document.getElementById('optStyle').value;
+            const font = document.getElementById('optFont').value;
+            const lighting = document.getElementById('optLighting').value;
+            const ratio = document.getElementById('optRatio').value;
+            const language = document.getElementById('optLanguage').value;
+
             if (!prompt) return;
 
             setLoading(true);
@@ -238,9 +355,17 @@
             jsonOutput.classList.add('opacity-50', 'animate-pulse');
 
             try {
+                // KIRIM DATA LENGKAP KE BACKEND
                 const response = await fetch('/.netlify/functions/generate', {
                     method: 'POST',
-                    body: JSON.stringify({ prompt: prompt }),
+                    body: JSON.stringify({ 
+                        prompt: prompt,
+                        style: style,
+                        font: font,
+                        lighting: lighting,
+                        ratio: ratio,
+                        language: language
+                    }),
                     headers: { 'Content-Type': 'application/json' }
                 });
 

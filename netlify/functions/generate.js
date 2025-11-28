@@ -22,7 +22,6 @@ export const handler = async (event) => {
         const { prompt } = JSON.parse(event.body);
         const apiKey = process.env.GEMINI_API_KEY;
 
-        // CEK 1: Validasi API Key
         if (!apiKey) {
             console.error("FATAL: GEMINI_API_KEY is missing.");
             throw new Error("API Key belum disetting di Netlify Environment Variables.");
@@ -81,44 +80,76 @@ You must output ONLY valid JSON based on this exact structure:
 4. Output RAW JSON only. Do not use Markdown backticks.
 `;
 
-        // PERBAIKAN: Menggunakan versi spesifik 'gemini-1.5-flash-001' yang pasti ada
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-001:generateContent?key=${apiKey}`;
-        
-        const payload = {
-            contents: [{
-                role: "user",
-                parts: [{ text: `SYSTEM INSTRUCTION: ${systemPrompt}\n\nUSER INPUT: ${prompt}` }]
-            }],
-            generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 2000,
-                responseMimeType: "application/json"
+        // --- FUNGSI PEMANGGIL AI (DENGAN COBA ULANG) ---
+        async function callGemini(modelName) {
+            console.log(`Trying model: ${modelName}...`);
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+            
+            // Kita gabungkan System Prompt ke dalam User Prompt agar kompatibel dengan model lama (gemini-pro) juga
+            const finalPrompt = `SYSTEM INSTRUCTION:\n${systemPrompt}\n\nUSER INPUT:\n${prompt}`;
+
+            const payload = {
+                contents: [{
+                    role: "user",
+                    parts: [{ text: finalPrompt }]
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 2000,
+                    // responseMimeType: "application/json" // Kita hapus ini sementara karena gemini-pro kadang strict
+                }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(data.error.message); // Lempar error agar bisa ditangkap catch
             }
-        };
+            
+            if (!data.candidates || data.candidates.length === 0) {
+                throw new Error("Empty candidates");
+            }
 
-        const apiResponse = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await apiResponse.json();
-
-        // CEK 2: Error Handling dari Google
-        if (data.error) {
-            console.error("Google API Error:", JSON.stringify(data.error));
-            throw new Error(`Google menolak request: ${data.error.message} (Code: ${data.error.code || 'Unknown'})`);
+            return data.candidates[0].content.parts[0].text;
         }
 
-        // CEK 3: Validasi Candidates
-        if (!data.candidates || data.candidates.length === 0) {
-            console.error("No candidates returned. Full response:", JSON.stringify(data));
-            throw new Error("Gemini tidak memberikan kandidat jawaban (Empty Response).");
+        // --- LOGIKA UTAMA: COBA 1.5 FLASH -> FALLBACK KE PRO ---
+        let rawText;
+        try {
+            // Percobaan 1: Pakai Flash (Terbaik)
+            rawText = await callGemini('gemini-1.5-flash');
+        } catch (error) {
+            console.warn("Flash model failed, switching to fallback...", error.message);
+            try {
+                // Percobaan 2: Pakai Pro (Cadangan Stabil)
+                rawText = await callGemini('gemini-pro');
+            } catch (fallbackError) {
+                // Jika dua-duanya gagal, baru kita nyerah
+                throw new Error(`Semua model gagal. Error terakhir: ${fallbackError.message}`);
+            }
         }
 
-        const rawText = data.candidates[0].content.parts[0].text;
+        // --- PEMBERSIHAN JSON ---
+        // Kadang AI ngasih ```json di awal, kita harus bersihkan
         const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const jsonResult = JSON.parse(cleanJson);
+        
+        let jsonResult;
+        try {
+            jsonResult = JSON.parse(cleanJson);
+        } catch (e) {
+            // Jika gagal parse JSON (karena model lama mungkin agak ngelantur), kita kirim teks mentahnya saja dalam wrapper
+            console.error("JSON Parse Error, sending raw text.");
+            jsonResult = { 
+                error: "Format JSON tidak sempurna, tapi ini hasilnya:", 
+                raw_output: cleanJson 
+            };
+        }
 
         return {
             statusCode: 200,

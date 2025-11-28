@@ -80,12 +80,53 @@ You must output ONLY valid JSON based on this exact structure:
 4. Output RAW JSON only. Do not use Markdown backticks.
 `;
 
-        // --- FUNGSI PEMANGGIL AI (DENGAN COBA ULANG) ---
-        async function callGemini(modelName) {
-            console.log(`Trying model: ${modelName}...`);
+        // --- FUNGSI 1: CARI MODEL YANG TERSEDIA (AUTO-DISCOVERY) ---
+        async function getAvailableModel() {
+            console.log("Auto-discovering available models...");
+            const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+            
+            const response = await fetch(listUrl);
+            const data = await response.json();
+
+            if (data.error) {
+                throw new Error(`Gagal cek model: ${data.error.message}`);
+            }
+
+            if (!data.models) {
+                throw new Error("API Key valid tapi tidak ada model yang tersedia.");
+            }
+
+            // Prioritas pencarian: Cari yang ada kata 'flash' (cepat), kalau ga ada cari 'pro', kalau ga ada ambil sembarang yang bisa generateContent
+            const flashModel = data.models.find(m => m.name.includes('flash') && m.supportedGenerationMethods.includes('generateContent'));
+            const proModel = data.models.find(m => m.name.includes('pro') && m.supportedGenerationMethods.includes('generateContent'));
+            const anyModel = data.models.find(m => m.supportedGenerationMethods.includes('generateContent'));
+
+            const selected = flashModel || proModel || anyModel;
+
+            if (!selected) {
+                throw new Error("Tidak ditemukan model yang mendukung 'generateContent' di akun ini.");
+            }
+
+            // Nama model dari list biasanya formatnya "models/gemini-1.5-flash". 
+            // Kita butuh nama bersihnya atau pakai langsung.
+            // API generateContent butuh URL: .../v1beta/models/{MODEL_NAME}:generateContent
+            // Data dari list sudah berbentuk "models/gemini-xyz", jadi kita harus hati-hati parsingnya.
+            
+            // Contoh nama dari list: "models/gemini-1.5-flash-001"
+            // Kita ambil bagian setelah "models/"
+            const modelName = selected.name.replace('models/', '');
+            console.log(`Model terpilih: ${modelName}`);
+            return modelName;
+        }
+
+        // --- FUNGSI 2: EKSEKUSI PROMPT ---
+        async function runInference() {
+            // Langkah 1: Cari model dulu
+            const modelName = await getAvailableModel();
+
+            // Langkah 2: Panggil model tersebut
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
             
-            // Kita gabungkan System Prompt ke dalam User Prompt agar kompatibel dengan model lama (gemini-pro) juga
             const finalPrompt = `SYSTEM INSTRUCTION:\n${systemPrompt}\n\nUSER INPUT:\n${prompt}`;
 
             const payload = {
@@ -95,8 +136,7 @@ You must output ONLY valid JSON based on this exact structure:
                 }],
                 generationConfig: {
                     temperature: 0.7,
-                    maxOutputTokens: 2000,
-                    // responseMimeType: "application/json" // Kita hapus ini sementara karena gemini-pro kadang strict
+                    maxOutputTokens: 2000
                 }
             };
 
@@ -108,42 +148,22 @@ You must output ONLY valid JSON based on this exact structure:
 
             const data = await response.json();
 
-            if (data.error) {
-                throw new Error(data.error.message); // Lempar error agar bisa ditangkap catch
-            }
-            
-            if (!data.candidates || data.candidates.length === 0) {
-                throw new Error("Empty candidates");
-            }
+            if (data.error) throw new Error(data.error.message);
+            if (!data.candidates || data.candidates.length === 0) throw new Error("Empty candidates");
 
             return data.candidates[0].content.parts[0].text;
         }
 
-        // --- LOGIKA UTAMA: COBA 1.5 FLASH -> FALLBACK KE PRO ---
-        let rawText;
-        try {
-            // Percobaan 1: Pakai Flash (Terbaik)
-            rawText = await callGemini('gemini-1.5-flash');
-        } catch (error) {
-            console.warn("Flash model failed, switching to fallback...", error.message);
-            try {
-                // Percobaan 2: Pakai Pro (Cadangan Stabil)
-                rawText = await callGemini('gemini-pro');
-            } catch (fallbackError) {
-                // Jika dua-duanya gagal, baru kita nyerah
-                throw new Error(`Semua model gagal. Error terakhir: ${fallbackError.message}`);
-            }
-        }
+        // --- EKSEKUSI UTAMA ---
+        const rawText = await runInference();
 
-        // --- PEMBERSIHAN JSON ---
-        // Kadang AI ngasih ```json di awal, kita harus bersihkan
+        // --- BERSIH-BERSIH OUTPUT ---
         const cleanJson = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
         
         let jsonResult;
         try {
             jsonResult = JSON.parse(cleanJson);
         } catch (e) {
-            // Jika gagal parse JSON (karena model lama mungkin agak ngelantur), kita kirim teks mentahnya saja dalam wrapper
             console.error("JSON Parse Error, sending raw text.");
             jsonResult = { 
                 error: "Format JSON tidak sempurna, tapi ini hasilnya:", 
@@ -161,7 +181,7 @@ You must output ONLY valid JSON based on this exact structure:
         console.error("Function execution failed:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: error.message })
+            body: JSON.stringify({ error: `Gagal: ${error.message}` })
         };
     }
 };

@@ -30,11 +30,18 @@ export const handler = async (event) => {
         const systemPrompt = `
 **ROLE:**
 You are a World-Class Commercial Creative Director specializing in High-Impact Advertising & Nano Banana Pro (Gemini Image 3).
-Your enemy is "Boring". Your goal is "Dynamic", "Explosive", and "Scroll-Stopping" visuals.
+Your goal is "Dynamic", "Explosive", and "Scroll-Stopping" visuals, BUT you must maintain PERFECT JSON SYNTAX.
 
 **TASK:**
-Convert simple user ideas into a sophisticated, highly detailed JSON Prompt. 
-You must "hallucinate" excessive details (micro-textures, physics, lighting interactions) to make the image look expensive.
+Convert user ideas into a sophisticated, highly detailed JSON Prompt. 
+"Hallucinate" excessive details (textures, lighting) to make it look expensive.
+
+**CRITICAL SYNTAX RULES:**
+1. **ESCAPE QUOTES:** If a text description contains a quote, you MUST escape it. 
+   - WRONG: "text": "The sign says "HELLO""
+   - RIGHT: "text": "The sign says \"HELLO\""
+2. **NO COMMENTS:** Do not add // comments inside the JSON.
+3. **PURE JSON:** Return ONLY the JSON object. No intro text.
 
 **MANDATORY JSON SCHEMA:**
 {
@@ -42,14 +49,14 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
     "type": "Select best fit: Cinematic / High-Speed / Minimalist / Surreal / 3D Render",
     "subject_context": "Short context of the ad/image",
     "composition_logic": {
-      "angle": "Dynamic Camera angle (e.g., Dutch Tilt, Worm's Eye, Macro, Wide distortion). NEVER use flat/boring angles.",
-      "depth_layering": "Explicitly define Foreground (blurred particles), Middleground (Hero), and Background. CREATE DEPTH.",
+      "angle": "Dynamic Camera angle (e.g., Dutch Tilt, Worm's Eye, Macro). Avoid flat angles.",
+      "depth_layering": "Explicitly define Foreground, Middleground, and Background.",
       "focus": "Focus point and depth of field details"
     },
     "visual_elements": {
-      "main_subject": "High-detail description of the main object/product. Mention textures (sweat droplets, scratches, fabric weave, oil sheen).",
-      "action_elements": "MANDATORY: Add dynamic movement. (e.g., Flying debris, splashing liquids, rising steam, floating particles, light leaks, motion blur). Make it busy and alive.",
-      "environment": "Background setting description with specific materials (concrete, brushed metal, wood, neon grid)."
+      "main_subject": "High-detail description of the main object/product (textures, materials).",
+      "action_elements": "MANDATORY: Add dynamic movement (flying debris, splashes, steam, light leaks).",
+      "environment": "Background setting description with specific materials."
     },
     "typography_content": {
       "headline": "Main text",
@@ -59,28 +66,22 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
     "text_integration_styling": {
       "headline_style": {
         "font": "Font vibe description",
-        "placement": "CRITICAL: The text must interact with the scene. Use 'OCCLUSION' (e.g., 'The burger slightly covers the letter B', 'Smoke weaves through the text'). DO NOT just paste text on top.",
-        "material_and_lighting": "Define text material (e.g., 'Brushed Gold reacting to light', 'Neon tube', 'Frosted Glass', 'Burning Ember')."
+        "placement": "CRITICAL: The text must interact with the scene (Occlusion/Depth).",
+        "material_and_lighting": "Define text material (e.g., 'Neon tube', 'Gold', 'Ice')."
       },
-      "cta_style": "Describe the button as a physical object. (e.g., 'Glassmorphism pill shape with inner glow', 'Distressed metal tag', '3D floating button'). NOT just 'a red button'."
+      "cta_style": "Describe the button as a physical object (e.g., 'Glass pill', 'Metal tag')."
     },
     "lighting_and_atmosphere": {
-      "lighting_setup": "Complex lighting (e.g., 'Rim Light + Soft Fill', 'Volumetric God Rays', 'Cyberpunk Neon Split Lighting'). Avoid flat lighting.",
-      "special_effects": "Lens flares, chromatic aberration, film grain, bokeh, volumetric fog, heat haze."
+      "lighting_setup": "Complex lighting (e.g., Rim Light, Volumetric Rays, Neon Split).",
+      "special_effects": "Lens flares, chromatic aberration, film grain, bokeh."
     },
     "color_palette": {
-      "primary": "Hex or name",
-      "secondary": "Hex or name",
-      "contrast": "Hex or name"
+      "primary": "Hex/name",
+      "secondary": "Hex/name",
+      "contrast": "Hex/name"
     }
   }
 }
-
-**RULES:**
-1. If the user doesn't provide specific text, invent catchy, short marketing copy.
-2. ALWAYS enforce 'Occlusion' logic. The text should feel like it's physically IN the scene.
-3. Use sensory language (e.g., "glistening", "sizzling", "velvety", "translucent", "gritty").
-4. Output RAW JSON only. Do not include comments (// or /*) in the JSON output.
 `;
 
         let constraints = "";
@@ -119,7 +120,7 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
             const payload = {
                 contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
                 generationConfig: {
-                    temperature: 0.85,
+                    temperature: 0.7, // KEMBALI KE 0.7 AGAR STABIL & JSON VALID
                     maxOutputTokens: 2000,
                     responseMimeType: "application/json"
                 }
@@ -140,8 +141,11 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
 
         const rawText = await runInference();
 
-        // --- JSON CLEANING & PARSING LOGIC ---
+        // --- JSON CLEANING LOGIC ---
+        // 1. Hapus markdown ```json
         let cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        
+        // 2. Ambil hanya bagian { ... } terluar
         const firstBrace = cleanJson.indexOf('{');
         const lastBrace = cleanJson.lastIndexOf('}');
         
@@ -151,25 +155,22 @@ You must "hallucinate" excessive details (micro-textures, physics, lighting inte
         
         let jsonResult;
         try {
-            // Percobaan 1: Strict Standard JSON Parse
+            // Percobaan parsing standar
             jsonResult = JSON.parse(cleanJson);
         } catch (e) {
-            console.warn("Standard JSON Parse failed, attempting Loose Parse...");
+            console.warn("JSON Parse Failed. Trying loose cleanup...");
             try {
-                // Percobaan 2: Loose Parse (Menangani trailing commas atau comments yang sering dibuat AI)
-                // Kita gunakan Function constructor sebagai alternatif aman dari eval untuk data internal
-                // Ini akan mengizinkan format objek JS yang tidak valid secara JSON ketat
-                const looseJson = cleanJson.replace(/\/\/.*$/gm, ''); // Hapus single line comments jika ada
-                jsonResult = (new Function(`return ${looseJson}`))();
+                // Fallback darurat: Mencoba membersihkan karakter aneh jika perlu,
+                // tapi biasanya dengan temperature 0.7 + system prompt di atas, ini jarang terjadi.
+                // Kita gunakan Function constructor sebagai parser yang lebih 'pemaaf' daripada JSON.parse
+                // HATI-HATI: Jangan strip komentar // lagi karena bisa merusak URL
+                jsonResult = (new Function(`return ${cleanJson}`))();
             } catch (e2) {
-                console.error("All parsing attempts failed.", e2);
-                // Fallback Terakhir: Tampilkan raw text dalam struktur yang bisa dibaca user
+                console.error("All parsing failed.", e2);
+                // Jika masih gagal, baru kita tampilkan raw text
                 jsonResult = { 
-                    "status": "Generated (Raw Format)",
-                    "note": "AI menghasilkan format yang sedikit tidak standar, tapi isinya ada di bawah:",
-                    "prompt": {
-                        "visual_elements": { "raw_content": cleanJson }
-                    }
+                    "error": "Maaf, AI terlalu kreatif dan merusak format JSON. Silakan coba lagi.",
+                    "raw_output": cleanJson 
                 };
             }
         }

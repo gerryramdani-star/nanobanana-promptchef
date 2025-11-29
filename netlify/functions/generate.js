@@ -64,7 +64,7 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
     "text_integration_styling": {
       "headline_style": {
         "font": "Font vibe description",
-        "placement": "CRITICAL: The text must interact with the scene (Occlusion/Depth).",
+        "placement": "CRITICAL: The text MUST NOT be flat. Describe rotation, perspective skew, or curvature to match the object. Use 'OCCLUSION' (e.g., 'The burger slightly covers the letter B').",
         "material_and_lighting": "Define text material (e.g., 'Neon tube', 'Gold', 'Ice')."
       },
       "cta_style": "Describe the button as a physical object (e.g., 'Glass pill', 'Metal tag')."
@@ -118,8 +118,8 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
             const payload = {
                 contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
                 generationConfig: {
-                    temperature: 1, // Sedikit lebih rendah dari 0.85 agar lebih patuh struktur, tapi tetap kreatif
-                    maxOutputTokens: 8192, // MAX CAPACITY: Agar tidak terpotong di tengah jalan!
+                    temperature: 1, 
+                    maxOutputTokens: 8192, 
                     responseMimeType: "application/json"
                 }
             };
@@ -181,4 +181,3 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
         };
     }
 };
-

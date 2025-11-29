@@ -37,11 +37,9 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
 "Hallucinate" excessive details (textures, lighting) to make it look expensive.
 
 **CRITICAL SYNTAX RULES:**
-1. **ESCAPE QUOTES:** If a text description contains a quote, you MUST escape it. 
-   - WRONG: "text": "The sign says "HELLO""
-   - RIGHT: "text": "The sign says \"HELLO\""
+1. **ESCAPE QUOTES:** If a text description contains a quote, you MUST escape it. (e.g., "The sign says \\"HELLO\\"")
 2. **NO COMMENTS:** Do not add // comments inside the JSON.
-3. **PURE JSON:** Return ONLY the JSON object. No intro text.
+3. **COMPLETE JSON:** Do not stop generating until the final closing brace '}' is written.
 
 **MANDATORY JSON SCHEMA:**
 {
@@ -120,8 +118,8 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
             const payload = {
                 contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
                 generationConfig: {
-                    temperature: 0.7, // KEMBALI KE 0.7 AGAR STABIL & JSON VALID
-                    maxOutputTokens: 2000,
+                    temperature: 0.75, // Sedikit lebih rendah dari 0.85 agar lebih patuh struktur, tapi tetap kreatif
+                    maxOutputTokens: 8192, // MAX CAPACITY: Agar tidak terpotong di tengah jalan!
                     responseMimeType: "application/json"
                 }
             };
@@ -142,10 +140,9 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
         const rawText = await runInference();
 
         // --- JSON CLEANING LOGIC ---
-        // 1. Hapus markdown ```json
         let cleanJson = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
         
-        // 2. Ambil hanya bagian { ... } terluar
+        // Cari kurung kurawal terluar untuk membuang teks intro/outro sampah
         const firstBrace = cleanJson.indexOf('{');
         const lastBrace = cleanJson.lastIndexOf('}');
         
@@ -155,21 +152,16 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
         
         let jsonResult;
         try {
-            // Percobaan parsing standar
             jsonResult = JSON.parse(cleanJson);
         } catch (e) {
-            console.warn("JSON Parse Failed. Trying loose cleanup...");
+            console.warn("Standard JSON Parse failed, attempting Loose Parse...");
             try {
-                // Fallback darurat: Mencoba membersihkan karakter aneh jika perlu,
-                // tapi biasanya dengan temperature 0.7 + system prompt di atas, ini jarang terjadi.
-                // Kita gunakan Function constructor sebagai parser yang lebih 'pemaaf' daripada JSON.parse
-                // HATI-HATI: Jangan strip komentar // lagi karena bisa merusak URL
+                // Fallback: Menggunakan evaluasi JS yang lebih pemaaf
                 jsonResult = (new Function(`return ${cleanJson}`))();
             } catch (e2) {
                 console.error("All parsing failed.", e2);
-                // Jika masih gagal, baru kita tampilkan raw text
                 jsonResult = { 
-                    "error": "Maaf, AI terlalu kreatif dan merusak format JSON. Silakan coba lagi.",
+                    "error": "Maaf, AI kehabisan napas saat menulis detail yang sangat panjang. Silakan coba lagi.",
                     "raw_output": cleanJson 
                 };
             }

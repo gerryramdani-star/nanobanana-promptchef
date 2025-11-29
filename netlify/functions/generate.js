@@ -118,7 +118,7 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
             const payload = {
                 contents: [{ role: "user", parts: [{ text: finalPrompt }] }],
                 generationConfig: {
-                    temperature: 0.75, // Sedikit lebih rendah dari 0.85 agar lebih patuh struktur, tapi tetap kreatif
+                    temperature: 1, // Sedikit lebih rendah dari 0.85 agar lebih patuh struktur, tapi tetap kreatif
                     maxOutputTokens: 8192, // MAX CAPACITY: Agar tidak terpotong di tengah jalan!
                     responseMimeType: "application/json"
                 }
@@ -181,3 +181,4 @@ Convert user ideas into a sophisticated, highly detailed JSON Prompt.
         };
     }
 };
+
